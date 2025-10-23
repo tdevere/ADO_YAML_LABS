@@ -20,7 +20,7 @@ jobs:
   - job: Build
     displayName: 'Build Application'
     steps:
-      - template: templates/build-test.yml
+      - template: ./templates/build-test.yml
         parameters:
           buildConfig: 'Release'
           projectPath: 'test-project'
