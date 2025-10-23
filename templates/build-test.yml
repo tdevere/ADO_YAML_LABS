@@ -1,0 +1,27 @@
+parameters:
+  - name: buildConfig
+    default: 'Release'
+  - name: projectPath
+    default: 'test-project'
+
+steps:
+  - task: UseDotNet@2
+    displayName: 'Install .NET SDK'
+    inputs:
+      version: '6.x'
+  - task: DotNetCoreCLI@2
+    displayName: 'Restore'
+    inputs:
+      command: 'restore'
+      projects: '${{ parameters.projectPath }}/*.csproj'
+  - task: DotNetCoreCLI@2
+    displayName: 'Build'
+    inputs:
+      command: 'build'
+      projects: '${{ parameters.projectPath }}/BuildTestApp.csproj'
+      arguments: '--configuration ${{ parameters.buildConfig }}'
+  - task: DotNetCoreCLI@2
+    displayName: 'Test'
+    inputs:
+      command: 'run'
+      projects: '${{ parameters.projectPath }}/BuildTestApp.csproj'

@@ -1,0 +1,45 @@
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+
+pr:
+  branches:
+    include:
+      - develop
+
+pool:
+  name: 'Default'
+
+variables:
+  buildConfiguration: 'Release'
+  testProjectPath: 'test-project'
+
+jobs:
+  - job: Build
+    displayName: 'Build Application'
+    steps:
+      - task: UseDotNet@2
+        displayName: 'Install .NET SDK'
+        inputs:
+          version: '6.x'
+
+      - task: DotNetCoreCLI@2
+        displayName: 'Restore packages'
+        inputs:
+          command: 'restore'
+          projects: '$(testProjectPath)/*.csproj'
+
+      - task: DotNetCoreCLI@2
+        displayName: 'Build'
+        inputs:
+          command: 'build'
+          projects: '$(testProjectPath)/BuildTestApp.csproj'
+          arguments: '--configuration $(buildConfiguration)'
+
+      - task: DotNetCoreCLI@2
+        displayName: 'Run application tests'
+        inputs:
+          command: 'run'
+          projects: '$(testProjectPath)/BuildTestApp.csproj'

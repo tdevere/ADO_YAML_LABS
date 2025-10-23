@@ -1,0 +1,26 @@
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+
+pr:
+  branches:
+    include:
+      - develop
+
+pool:
+  name: 'Default'
+
+variables:
+  buildConfiguration: 'Release'
+  testProjectPath: 'test-project'
+
+jobs:
+  - job: Build
+    displayName: 'Build Application'
+    steps:
+      - template: templates/build-test.yml
+        parameters:
+          buildConfig: $(buildConfiguration)
+          projectPath: $(testProjectPath)
