@@ -40,4 +40,4 @@ Thumbs.db
 pipelines/*-solution.yml
 
 # Test project (keep local)
-test-project/
+# test-project/
