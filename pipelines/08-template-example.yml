@@ -22,5 +22,5 @@ jobs:
     steps:
       - template: templates/build-test.yml
         parameters:
-          buildConfig: $(buildConfiguration)
-          projectPath: $(testProjectPath)
+          buildConfig: 'Release'
+          projectPath: 'test-project'
