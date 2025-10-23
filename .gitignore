@@ -5,6 +5,33 @@
 # Don't ignore .gitignore itself
 !.gitignore
 
-# Allow YAML examples with .yml extension anywhere in the repo
-!*.yml
-!**/*.yml
+### Standard project ignores (keep sources tracked)
+
+# .NET build outputs
+bin/
+obj/
+
+# VS Code
+.vscode/
+
+# Node
+node_modules/
+
+# Logs
+*.log
+
+# Mac/Windows temp
+.DS_Store
+Thumbs.db
+
+# Secrets / environment
+.env
+.env.local
+*.key
+*.pem
+
+# Ignore user-specific files
+.user
+
+# Keep YAML pipelines and examples tracked
+# (no special allow-list required)
