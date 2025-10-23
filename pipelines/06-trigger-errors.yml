@@ -1,0 +1,69 @@
+# ❌ BROKEN - SCENARIO 5: TRIGGER & CONDITION CONFIGURATION ERRORS
+# Common Issue: ~10% of pipeline support tickets
+# Error Type: Conflicting triggers, bad condition syntax, schedule issues
+
+trigger:
+  - main
+
+pr:
+  - main
+  branches:
+    include:
+      - feature/*
+    exclude:
+      - feature/experimental
+
+schedules:
+  - cron: "0 2 * * 1-5"
+    displayName: 'Daily build'
+    branches:
+      include:
+        - main
+      exclude:
+        - main
+    always: true
+
+variables:
+  isMainBranch: $[eq(variables.Build.SourceBranch, 'refs/heads/main')]
+  buildConfig: 'Release'
+
+jobs:
+  - job: MainBuild
+    displayName: 'Build on Main'
+    condition: and(succeeded(), eq(variables.isMainBranch, 'true'))
+    steps:
+      - task: UseDotNet@2
+        displayName: 'Install .NET'
+        inputs:
+          version: '6.x'
+
+      - task: DotNetCoreCLI@2
+        displayName: 'Build'
+        inputs:
+          command: 'build'
+          projects: 'test-project/BuildTestApp.csproj'
+
+  - job: FeatureBuild
+    displayName: 'Build on Feature Branch'
+    condition: ne(variables['Build.SourceBranch'], 'refs/heads/main')
+    steps:
+      - script: echo "Feature branch build"
+
+  - job: DeployMain
+    displayName: 'Deploy to Production'
+    dependsOn:
+      - MainBuild
+      - FeatureBuild
+    condition: and(succeeded('MainBuild'), failed('FeatureBuild'))
+    steps:
+      - script: echo "Deploying to production"
+
+  - job: NotifyCompletion
+    displayName: 'Notify Completion'
+    dependsOn:
+      - MainBuild
+      - FeatureBuild
+      - DeployMain
+    condition: always()
+    steps:
+      - script: echo "Pipeline completed: success=$(Agent.JobStatus)"

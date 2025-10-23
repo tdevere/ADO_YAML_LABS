@@ -1,0 +1,49 @@
+# ❌ BROKEN - SCENARIO 3: VARIABLE & EXPRESSION ERRORS
+# Common Issue: ~20% of pipeline support tickets
+# Error Type: Mixed syntax, wrong variable scope, incorrect runtime expressions
+
+trigger:
+  - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  buildConfig: 'Release'
+  isMaster: $[eq(variables['Build.SourceBranch'], 'refs/heads/main')]
+  templateVar: '${{ variables.buildConfig }}-build'
+  directVar: $(System.DefaultWorkingDirectory)
+
+jobs:
+  - job: VariableTest
+    displayName: 'Test Variable Expressions'
+    variables:
+      jobVar: 'JobLevel'
+      dependentVar: '$(buildConfig)-$(jobVar)'
+      conditionalVar: $[if(eq(variables.isMaster, true), 'production', 'staging')]
+
+    steps:
+      - script: |
+          echo "Config: $(buildConfig)"
+          echo "Template Var: ${{ variables.buildConfig }}"
+          echo "Dependent: $(dependentVar)"
+          echo "Conditional: $(conditionalVar)"
+          echo "Directory: $DIRECTVAR"
+        displayName: 'Print Variables'
+
+      - task: DotNetCoreCLI@2
+        displayName: 'Build'
+        inputs:
+          command: 'build'
+          projects: ${{ variables.testPath }}
+          arguments: '--configuration ${{ variables.buildConfig }}'
+
+  - job: ConditionalJob
+    condition: eq(variables['isMaster'], true)
+    steps:
+      - script: echo "This only runs on main branch"
+
+  - job: ConditionJob
+    condition: eq(variables.isMaster, 'true')
+    steps:
+      - script: echo "Production deployment"

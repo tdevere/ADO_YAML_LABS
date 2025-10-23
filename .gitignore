@@ -1,6 +1,6 @@
 # Track only .yml files in this repository
 # Ignore everything by default
-*
+
 
 # Don't ignore .gitignore itself
 !.gitignore

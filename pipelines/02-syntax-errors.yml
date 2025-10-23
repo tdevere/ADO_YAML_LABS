@@ -1,0 +1,45 @@
+# ❌ BROKEN - SCENARIO 1: SYNTAX & INDENTATION ERRORS
+# Common Issue: ~30% of pipeline support tickets
+# Error Type: YAML parsing fails due to inconsistent indentation
+
+trigger:
+- main
+  - develop
+
+pool:
+vmImage: 'ubuntu-latest'
+
+variables:
+buildConfiguration: 'Release'
+  isMain: $[eq(variables['Build.SourceBranch'], 'refs/heads/main')]
+
+jobs:
+- job: Build
+  displayName: 'Build Application'
+  steps:
+  - task: UseDotNet@2
+    displayName: 'Install .NET SDK'
+    inputs:
+    version: '6.x'
+
+  - task: DotNetCoreCLI@2
+    displayName: 'Restore packages'
+    inputs:
+      command: 'restore'
+      projects: 'test-project/*.csproj'
+
+  - task: DotNetCoreCLI@2
+    displayName: 'Build'
+    inputs:
+    command: 'build'
+    projects: 'test-project/BuildTestApp.csproj'
+
+  - script: |
+      echo "Build complete"
+    displayName: 'Complete'
+
+- job: Publish
+  dependsOn: Build
+  condition: succeeded(Build)
+  steps:
+  - script: echo "Publishing..."

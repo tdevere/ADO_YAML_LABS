@@ -1,0 +1,75 @@
+# ❌ BROKEN - SCENARIO 4: TASK & DEPENDENCY ERRORS
+# Common Issue: ~15% of pipeline support tickets
+# Error Type: Missing required inputs, wrong task versions, incorrect dependencies
+
+trigger:
+  - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  buildConfiguration: 'Release'
+  testProjectPath: 'test-project'
+
+jobs:
+  - job: BuildJob
+    displayName: 'Build Application'
+    steps:
+      - task: UseDotNet@2
+        displayName: 'Install .NET SDK'
+        inputs:
+          version: '6.x'
+
+      - task: DotNetCoreCLI@2
+        displayName: 'Restore packages'
+        inputs:
+          command: 'restore'
+
+      - task: DotNetCoreCLI@2
+        displayName: 'Build'
+        inputs:
+          command: 'build'
+          projects: '$(testProjectPath)/BuildTestApp.csproj'
+          arguments: '--configuration $(buildConfiguration)'
+
+      - task: DotNetCoreCLI@2
+        displayName: 'Run Tests'
+        inputs:
+          command: 'test'
+          projects: '$(testProjectPath)/*Tests.csproj'
+          arguments: '--configuration $(buildConfiguration) --collect:"XPlat Code Coverage"'
+          publishTestResults: true
+
+  - job: PublishJob
+    displayName: 'Publish Artifacts'
+    dependsOn: WrongJobName
+    condition: succeeded(WrongJobName)
+    steps:
+      - task: DotNetCoreCLI@2
+        displayName: 'Publish'
+        inputs:
+          command: 'publish'
+          projects: '$(testProjectPath)/BuildTestApp.csproj'
+
+      - task: PublishBuildArtifacts@1
+        displayName: 'Upload'
+        inputs:
+          PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+
+  - job: DeployJob
+    displayName: 'Deploy Application'
+    dependsOn:
+      - BuildJob
+      - PublishJob
+    condition: and(succeeded('BuildJob'), succeeded('PublishJob'))
+    steps:
+      - task: DownloadBuildArtifacts@0
+        displayName: 'Download Artifacts'
+        inputs:
+          artifactName: 'drop'
+
+      - task: AzureWebApp@1
+        inputs:
+          azureSubscription: 'MyConnection'
+          appName: 'myapp-prod'

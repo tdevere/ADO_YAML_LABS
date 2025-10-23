@@ -1,0 +1,53 @@
+# ❌ BROKEN - SCENARIO 2: POOL & AGENT CONFIGURATION ERRORS
+# Common Issue: ~25% of pipeline support tickets
+# Error Type: Image deprecated, pool config incorrect, missing capabilities
+
+trigger:
+  - main
+
+pool:
+  vmImage: 'vs2017-win2016'
+
+variables:
+  buildConfiguration: 'Release'
+  testProjectPath: 'test-project'
+
+jobs:
+  - job: Build
+    displayName: 'Build with Deprecated Pool'
+    steps:
+      - task: UseDotNet@2
+        displayName: 'Install .NET SDK'
+        inputs:
+          version: '6.x'
+
+      - task: DotNetCoreCLI@2
+        displayName: 'Restore NuGet packages'
+        inputs:
+          command: 'restore'
+          projects: '$(testProjectPath)/*.csproj'
+
+      - task: DotNetCoreCLI@2
+        displayName: 'Build application'
+        inputs:
+          command: 'build'
+          projects: '$(testProjectPath)/BuildTestApp.csproj'
+          arguments: '--configuration $(buildConfiguration)'
+
+  - job: PublishArtifact
+    displayName: 'Publish Artifacts'
+    dependsOn: BuildJob
+    condition: succeeded()
+    pool: default
+    steps:
+      - task: DotNetCoreCLI@2
+        displayName: 'Publish application'
+        inputs:
+          command: 'publish'
+          projects: '$(testProjectPath)/BuildTestApp.csproj'
+
+      - task: PublishBuildArtifacts@1
+        displayName: 'Upload artifacts'
+        inputs:
+          PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+          ArtifactName: 'drop'
