@@ -35,3 +35,9 @@ Thumbs.db
 
 # Keep YAML pipelines and examples tracked
 # (no special allow-list required)
+
+# Solution files (keep local)
+pipelines/*-solution.yml
+
+# Test project (keep local)
+test-project/
