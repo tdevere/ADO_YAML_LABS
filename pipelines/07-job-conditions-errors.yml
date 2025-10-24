@@ -1,0 +1,36 @@
+# ❌ BROKEN - SCENARIO 5B: JOB CONDITION & DEPENDENCY ERRORS
+# Common Issue: ~10% of pipeline support tickets
+# Error Type: Bad condition syntax, wrong job dependencies, variable type mismatches
+
+trigger:
+  branches:
+    include:
+      - main
+
+variables:
+  # Incorrect: Runtime variable with wrong syntax (missing $ for compile-time)
+  isMainBranch: eq(variables.Build.SourceBranch, 'refs/heads/main')
+  buildConfig: 'Release'
+
+jobs:
+  - job: MainBuild
+    displayName: 'Build on Main'
+    # Incorrect: String 'true' instead of boolean true; and() with single arg
+    condition: and(succeeded(), eq(variables.isMainBranch, 'true'))
+    steps:
+      - script: echo "Main build"
+
+  - job: FeatureBuild
+    displayName: 'Build on Feature Branch'
+    # Incorrect: Missing quotes around variable name in ne()
+    condition: ne(variables[Build.SourceBranch], 'refs/heads/main')
+    steps:
+      - script: echo "Feature build"
+
+  - job: DeployMain
+    displayName: 'Deploy to Production'
+    # Incorrect: Wrong job name in dependsOn and condition
+    dependsOn: WrongJobName
+    condition: succeeded(WrongJobName)
+    steps:
+      - script: echo "Deploying"

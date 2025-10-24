@@ -15,7 +15,8 @@ Each YAML pipeline in `pipelines/` demonstrates a common YAML issue encountered 
 | `03-pool-errors.yml` | ❌ Pool Configuration | Common (25%) |
 | `04-variable-errors.yml` | ❌ Variable Expressions | Complex (20%) |
 | `05-task-errors.yml` | ❌ Task Dependencies | Intermediate (15%) |
-| `06-trigger-errors.yml` | ❌ Trigger Logic | Intermediate (10%) |
+| `06-trigger-syntax-errors.yml` | ❌ Trigger Syntax | Intermediate (10%) |
+| `07-job-conditions-errors.yml` | ❌ Job Conditions & Dependencies | Intermediate (10%) |
 
 ---
 
@@ -119,11 +120,17 @@ Each pipeline will:
 - **Solution:** Check task docs, verify names match exactly
 - **Prevent:** Use clear naming conventions
 
-### **5️⃣ Trigger Errors (10% of tickets)**
-- **File:** `06-trigger-errors.yml`
-- **Issue:** Conflicting filters, wrong condition syntax
-- **Solution:** Use `include` OR `exclude`, not both
-- **Test:** Look at pipeline history to verify trigger fires
+### **5️⃣ Trigger Syntax Errors (10% of tickets)**
+- **File:** `06-trigger-syntax-errors.yml`
+- **Issue:** Invalid trigger syntax, conflicting schedules, bad branch patterns
+- **Solution:** Use `branches: include/exclude` blocks; avoid conflicting filters
+- **Test:** Check pipeline triggers in Azure DevOps UI
+
+### **6️⃣ Job Conditions & Dependencies Errors (10% of tickets)**
+- **File:** `07-job-conditions-errors.yml`
+- **Issue:** Wrong condition syntax, mismatched job names, variable type errors
+- **Solution:** Use boolean values in conditions; ensure job names match exactly
+- **Debug:** Review job logs for condition evaluation
 
 ---
 
