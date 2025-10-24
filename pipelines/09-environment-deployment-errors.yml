@@ -1,113 +1,223 @@
-# ✅ FIXED - SCENARIO 9: ENVIRONMENT DEPLOYMENT ERRORS
-# Fixes: Proper environment references, stage dependencies, deployment jobs, environment variables
+# ❌ BROKEN - SCENARIO 9: ENVIRONMENT DEPLOYMENT ERRORS# ✅ FIXED - SCENARIO 9: ENVIRONMENT DEPLOYMENT ERRORS
+
+# Common Issue: ~15% of pipeline support tickets# Fixes: Proper environment references, stage dependencies, deployment jobs, environment variables
+
+# Error Type: Environment reference errors, missing approvals, incorrect stage dependencies
 
 trigger:
-  branches:
-    include:
+
+trigger:  branches:
+
+  branches:    include:
+
+    include:      - main
+
       - main
 
 # Fixed: Environment-specific variables defined at pipeline level
-variables:
-  buildConfig: 'Release'
-  # These would typically come from variable groups or environment variables
-  devApiUrl: 'https://api-dev.example.com'
+
+# Incorrect: Missing environment-specific variablesvariables:
+
+variables:  buildConfig: 'Release'
+
+  buildConfig: 'Release'  # These would typically come from variable groups or environment variables
+
+  # Missing: apiUrl, deploymentTarget variables per environment  devApiUrl: 'https://api-dev.example.com'
+
   stagingApiUrl: 'https://api-staging.example.com'
-  prodApiUrl: 'https://api.example.com'
 
-stages:
+stages:  prodApiUrl: 'https://api.example.com'
+
   - stage: Build
-    displayName: 'Build Application'
-    jobs:
-      - job: BuildJob
-        displayName: 'Build and Test'
-        pool:
-          vmImage: 'ubuntu-latest'
-        steps:
-          - task: UseDotNet@2
-            displayName: 'Install .NET'
-            inputs:
-              version: '6.x'
 
-          - task: DotNetCoreCLI@2
+    displayName: 'Build Application'stages:
+
+    jobs:  - stage: Build
+
+      - job: BuildJob    displayName: 'Build Application'
+
+        displayName: 'Build and Test'    jobs:
+
+        pool:      - job: BuildJob
+
+          name: 'Default'        displayName: 'Build and Test'
+
+        steps:        pool:
+
+          - task: UseDotNet@2          name: 'Default'
+
+            displayName: 'Install .NET'        steps:
+
+            inputs:          - task: UseDotNet@2
+
+              version: '6.x'            displayName: 'Install .NET'
+
+            inputs:
+
+          - task: DotNetCoreCLI@2              version: '6.x'
+
             displayName: 'Build Project'
-            inputs:
-              command: 'build'
-              projects: 'test-project/BuildTestApp.csproj'
-              configuration: $(buildConfig)
 
-          - task: DotNetCoreCLI@2
+            inputs:          - task: DotNetCoreCLI@2
+
+              command: 'build'            displayName: 'Build Project'
+
+              projects: 'test-project/BuildTestApp.csproj'            inputs:
+
+              configuration: $(buildConfig)              command: 'build'
+
+              projects: 'test-project/BuildTestApp.csproj'
+
+          - task: DotNetCoreCLI@2              configuration: $(buildConfig)
+
             displayName: 'Publish Artifacts'
-            inputs:
-              command: 'publish'
-              projects: 'test-project/BuildTestApp.csproj'
+
+            inputs:          - task: DotNetCoreCLI@2
+
+              command: 'publish'            displayName: 'Publish Artifacts'
+
+              projects: 'test-project/BuildTestApp.csproj'            inputs:
+
+              arguments: '--configuration $(buildConfig) --output $(Build.ArtifactStagingDirectory)'              command: 'publish'
+
+              publishWebProjects: false              projects: 'test-project/BuildTestApp.csproj'
+
               arguments: '--configuration $(buildConfig) --output $(Build.ArtifactStagingDirectory)'
-              publishWebProjects: false
 
-          - task: PublishBuildArtifacts@1
+          - task: PublishBuildArtifacts@1              publishWebProjects: false
+
             displayName: 'Publish Build Artifacts'
-            inputs:
+
+            inputs:          - task: PublishBuildArtifacts@1
+
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)'            displayName: 'Publish Build Artifacts'
+
+              ArtifactName: 'drop'            inputs:
+
               PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-              ArtifactName: 'drop'
 
-  # Fixed: Stage dependency on Build stage
+  # Incorrect: Missing stage dependency (Deploy_Dev should depend on Build)              ArtifactName: 'drop'
+
   - stage: Deploy_Dev
-    displayName: 'Deploy to Development'
-    dependsOn: Build
-    jobs:
-      # Fixed: Using deployment job type with environment reference
-      - deployment: DeployDevJob
-        displayName: 'Deploy to Dev Environment'
-        pool:
-          vmImage: 'ubuntu-latest'
-        # Fixed: Reference to Development environment (enables approvals, tracking)
-        environment: 'Development'
-        strategy:
+
+    displayName: 'Deploy to Development'  # Fixed: Stage dependency on Build stage
+
+    jobs:  - stage: Deploy_Dev
+
+      - job: DeployDevJob    displayName: 'Deploy to Development'
+
+        displayName: 'Deploy to Dev Environment'    dependsOn: Build
+
+        pool:    jobs:
+
+          name: 'Default'      # Fixed: Using deployment job type with environment reference
+
+        steps:      - deployment: DeployDevJob
+
+          # Incorrect: Missing DownloadBuildArtifacts task        displayName: 'Deploy to Dev Environment'
+
+          - script: |        pool:
+
+              echo "Deploying to Development environment"          vmImage: 'ubuntu-latest'
+
+              echo "Configuration: $(buildConfig)"        # Fixed: Reference to Development environment (enables approvals, tracking)
+
+              # Missing: Environment-specific variables        environment: 'Development'
+
+            displayName: 'Simulate Dev Deployment'        strategy:
+
           runOnce:
-            deploy:
-              steps:
-                # Fixed: Download artifacts from Build stage
-                - task: DownloadBuildArtifacts@1
-                  displayName: 'Download Artifacts'
-                  inputs:
-                    buildType: 'current'
-                    downloadType: 'single'
-                    artifactName: 'drop'
+
+  - stage: Deploy_Staging            deploy:
+
+    displayName: 'Deploy to Staging'              steps:
+
+    # Incorrect: Missing dependency on Deploy_Dev stage                # Fixed: Download artifacts from Build stage
+
+    jobs:                - task: DownloadBuildArtifacts@1
+
+      # Incorrect: Missing deployment job type and environment reference                  displayName: 'Download Artifacts'
+
+      - job: DeployStagingJob                  inputs:
+
+        displayName: 'Deploy to Staging Environment'                    buildType: 'current'
+
+        pool:                    downloadType: 'single'
+
+          name: 'Default'                    artifactName: 'drop'
+
+        steps:                    downloadPath: '$(System.ArtifactsDirectory)'
+
+          - task: DownloadBuildArtifacts@1
+
+            displayName: 'Download Artifacts'                - script: |
+
+            inputs:                    echo "Deploying to Development environment"
+
+              buildType: 'current'                    echo "Configuration: $(buildConfig)"
+
+              downloadType: 'single'                    echo "API URL: $(devApiUrl)"
+
+              artifactName: 'drop'                    echo "Artifacts downloaded to: $(System.ArtifactsDirectory)"
+
+              downloadPath: '$(System.ArtifactsDirectory)'                  displayName: 'Simulate Dev Deployment'
+
+
+
+          - script: |  - stage: Deploy_Staging
+
+              echo "Deploying to Staging environment"    displayName: 'Deploy to Staging'
+
+              echo "Configuration: $(buildConfig)"    # Fixed: Correct dependency name matching the stage name
+
+            displayName: 'Simulate Staging Deployment'    dependsOn: Deploy_Dev
+
+    jobs:
+
+  - stage: Deploy_Production      # Fixed: Using deployment job type with environment reference
+
+    displayName: 'Deploy to Production'      - deployment: DeployStagingJob
+
+    # Incorrect: Missing dependency on Deploy_Staging        displayName: 'Deploy to Staging Environment'
+
+    jobs:        pool:
+
+      - job: DeployProdJob          vmImage: 'ubuntu-latest'
+
+        displayName: 'Deploy to Production Environment'        # Fixed: Reference to Staging environment
+
+        pool:        environment: 'Staging'
+
+          name: 'Default'        strategy:
+
+        # Incorrect: Missing condition to ensure previous stages succeeded          runOnce:
+
+        steps:            deploy:
+
+          - task: DownloadBuildArtifacts@1              steps:
+
+            displayName: 'Download Artifacts'                - task: DownloadBuildArtifacts@1
+
+            inputs:                  displayName: 'Download Artifacts'
+
+              buildType: 'current'                  inputs:
+
+              downloadType: 'single'                    buildType: 'current'
+
+              artifactName: 'drop'                    downloadType: 'single'
+
+              downloadPath: '$(System.ArtifactsDirectory)'                    artifactName: 'drop'
+
                     downloadPath: '$(System.ArtifactsDirectory)'
 
-                - script: |
-                    echo "Deploying to Development environment"
-                    echo "Configuration: $(buildConfig)"
-                    echo "API URL: $(devApiUrl)"
-                    echo "Artifacts downloaded to: $(System.ArtifactsDirectory)"
-                  displayName: 'Simulate Dev Deployment'
+          - script: |
 
-  - stage: Deploy_Staging
-    displayName: 'Deploy to Staging'
-    # Fixed: Correct dependency name matching the stage name
-    dependsOn: Deploy_Dev
-    jobs:
-      # Fixed: Using deployment job type with environment reference
-      - deployment: DeployStagingJob
-        displayName: 'Deploy to Staging Environment'
-        pool:
-          vmImage: 'ubuntu-latest'
-        # Fixed: Reference to Staging environment
-        environment: 'Staging'
-        strategy:
-          runOnce:
-            deploy:
-              steps:
-                - task: DownloadBuildArtifacts@1
-                  displayName: 'Download Artifacts'
-                  inputs:
-                    buildType: 'current'
-                    downloadType: 'single'
-                    artifactName: 'drop'
-                    downloadPath: '$(System.ArtifactsDirectory)'
+              echo "Deploying to Production environment"                - script: |
 
-                - script: |
-                    echo "Deploying to Staging environment"
-                    echo "Configuration: $(buildConfig)"
+              echo "Configuration: $(buildConfig)"                    echo "Deploying to Staging environment"
+
+            displayName: 'Simulate Production Deployment'                    echo "Configuration: $(buildConfig)"
+
                     echo "API URL: $(stagingApiUrl)"
                     echo "Artifacts downloaded to: $(System.ArtifactsDirectory)"
                   displayName: 'Simulate Staging Deployment'
