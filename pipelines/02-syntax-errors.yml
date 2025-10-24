@@ -4,13 +4,13 @@
 
 trigger:
 - main
-  - develop
+- develop
 
 pool:
   name: 'Default'
 
 variables:
-buildConfiguration: 'Release'
+  buildConfiguration: 'Release'
   isMain: $[eq(variables['Build.SourceBranch'], 'refs/heads/main')]
 
 jobs:
@@ -20,7 +20,7 @@ jobs:
   - task: UseDotNet@2
     displayName: 'Install .NET SDK'
     inputs:
-    version: '6.x'
+      version: '6.x'
 
   - task: DotNetCoreCLI@2
     displayName: 'Restore packages'
@@ -31,8 +31,8 @@ jobs:
   - task: DotNetCoreCLI@2
     displayName: 'Build'
     inputs:
-    command: 'build'
-    projects: 'test-project/BuildTestApp.csproj'
+      command: 'build'
+      projects: 'test-project/BuildTestApp.csproj'
 
   - script: |
       echo "Build complete"
@@ -40,6 +40,6 @@ jobs:
 
 - job: Publish
   dependsOn: Build
-  condition: succeeded(Build)
+  condition: succeeded()
   steps:
   - script: echo "Publishing..."
