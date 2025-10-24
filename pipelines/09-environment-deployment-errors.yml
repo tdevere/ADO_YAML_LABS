@@ -65,8 +65,7 @@ stages:
 
   - stage: Deploy_Staging
     displayName: 'Deploy to Staging'
-    # Incorrect: Wrong dependency name
-    dependsOn: Development
+    # Incorrect: Missing dependency on Deploy_Dev stage
     jobs:
       # Incorrect: Missing deployment job type and environment reference
       - job: DeployStagingJob
@@ -89,7 +88,7 @@ stages:
 
   - stage: Deploy_Production
     displayName: 'Deploy to Production'
-    # Incorrect: Missing dependency on Staging
+    # Incorrect: Missing dependency on Deploy_Staging
     jobs:
       - job: DeployProdJob
         displayName: 'Deploy to Production Environment'
