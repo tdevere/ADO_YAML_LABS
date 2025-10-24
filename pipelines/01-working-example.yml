@@ -1,6 +1,6 @@
 #test comment
 trigger:
-  - main
+  - none
 
 pool:
   name: 'Default'
