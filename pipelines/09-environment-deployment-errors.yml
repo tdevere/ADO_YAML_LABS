@@ -19,7 +19,7 @@ stages:
       - job: BuildJob
         displayName: 'Build and Test'
         pool:
-          vmImage: 'ubuntu-latest'
+          name: 'Default'
         steps:
           - task: UseDotNet@2
             displayName: 'Install .NET'
@@ -54,7 +54,7 @@ stages:
       - job: DeployDevJob
         displayName: 'Deploy to Dev Environment'
         pool:
-          vmImage: 'ubuntu-latest'
+          name: 'Default'
         steps:
           # Incorrect: Missing DownloadBuildArtifacts task
           - script: |
@@ -71,7 +71,7 @@ stages:
       - job: DeployStagingJob
         displayName: 'Deploy to Staging Environment'
         pool:
-          vmImage: 'ubuntu-latest'
+          name: 'Default'
         steps:
           - task: DownloadBuildArtifacts@1
             displayName: 'Download Artifacts'
@@ -93,7 +93,7 @@ stages:
       - job: DeployProdJob
         displayName: 'Deploy to Production Environment'
         pool:
-          vmImage: 'ubuntu-latest'
+          name: 'Default'
         # Incorrect: Missing condition to ensure previous stages succeeded
         steps:
           - task: DownloadBuildArtifacts@1

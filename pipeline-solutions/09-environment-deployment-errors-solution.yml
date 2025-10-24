@@ -21,7 +21,7 @@ stages:
       - job: BuildJob
         displayName: 'Build and Test'
         pool:
-          vmImage: 'ubuntu-latest'
+          name: 'Default'
         steps:
           - task: UseDotNet@2
             displayName: 'Install .NET'
@@ -58,7 +58,7 @@ stages:
       - deployment: DeployDevJob
         displayName: 'Deploy to Dev Environment'
         pool:
-          vmImage: 'ubuntu-latest'
+          name: 'Default'
         # Fixed: Reference to Development environment (enables approvals, tracking)
         environment: 'Development'
         strategy:
@@ -90,7 +90,7 @@ stages:
       - deployment: DeployStagingJob
         displayName: 'Deploy to Staging Environment'
         pool:
-          vmImage: 'ubuntu-latest'
+          name: 'Default'
         # Fixed: Reference to Staging environment
         environment: 'Staging'
         strategy:
@@ -123,7 +123,7 @@ stages:
       - deployment: DeployProdJob
         displayName: 'Deploy to Production Environment'
         pool:
-          vmImage: 'ubuntu-latest'
+          name: 'Default'
         # Fixed: Reference to Production environment (can have manual approvals)
         environment: 'Production'
         strategy:
