@@ -3,8 +3,9 @@
 # Error Type: YAML parsing fails due to inconsistent indentation
 
 trigger:
-- main
-- develop
+  - none
+# - main
+# - develop
 
 pool:
   name: 'Default'
