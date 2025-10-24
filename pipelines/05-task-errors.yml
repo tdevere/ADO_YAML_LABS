@@ -72,12 +72,16 @@ jobs:
         displayName: 'Publish'
         inputs:
           command: 'publish'
+          publishWebProjects: false
           projects: '$(testProjectPath)/BuildTestApp.csproj'
+          arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'
+          zipAfterPublish: false
 
       - task: PublishBuildArtifacts@1
         displayName: 'Upload'
         inputs:
           PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+          ArtifactName: 'drop'
 
   # Fixed: Proper multi-job dependencies and conditions (fixes wrong job names and condition syntax)
   - job: DeployJob
