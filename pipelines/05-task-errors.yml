@@ -47,13 +47,20 @@ jobs:
           projects: '$(testProjectPath)/BuildTestApp.csproj'
           arguments: '--configuration $(buildConfiguration)'
 
+      - task: DotNetCoreCLI@2
+        displayName: 'Build Tests'
+        inputs:
+          command: 'build'
+          projects: '$(testProjectPath)/UnitTests.csproj'
+          arguments: '--configuration $(buildConfiguration)'
+
       # Fixed: Add missing inputs and correct task configuration (fixes incomplete test task)
       - task: DotNetCoreCLI@2
         displayName: 'Run Tests'
         inputs:
           command: 'test'
-          projects: '$(testProjectPath)/*Tests.csproj'
-          arguments: '--configuration $(buildConfiguration) --collect:"XPlat Code Coverage"'
+          projects: '$(testProjectPath)/UnitTests.csproj'
+          arguments: '--configuration $(buildConfiguration) --no-build --collect:"XPlat Code Coverage"'
           publishTestResults: true
 
       - task: DotNetCoreCLI@2
