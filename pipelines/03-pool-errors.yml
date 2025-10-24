@@ -36,7 +36,7 @@ jobs:
 
   - job: PublishArtifact
     displayName: 'Publish Artifacts'
-    dependsOn: BuildJob
+    dependsOn: Build
     condition: succeeded()
     pool: default
     steps:
