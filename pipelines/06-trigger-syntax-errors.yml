@@ -2,11 +2,9 @@
 # Common Issue: ~10% of pipeline support tickets
 # Error Type: Invalid trigger syntax, conflicting schedules, bad branch patterns
 
-# Incorrect: Simple list for CI trigger (works for basic, fails for complex)
 trigger:
   - main
 
-# Incorrect: Simple list for PR trigger (invalid syntax)
 pr:
   - main
   branches:
@@ -15,7 +13,6 @@ pr:
     exclude:
       - feature/experimental
 
-# Incorrect: Conflicting branch filters in schedule (include and exclude same branch)
 schedules:
   - cron: "0 2 * * 1-5"
     displayName: 'Daily build'

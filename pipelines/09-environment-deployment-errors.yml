@@ -1,0 +1,111 @@
+# ❌ BROKEN - SCENARIO 9: ENVIRONMENT DEPLOYMENT ERRORS
+# Common Issue: ~15% of pipeline support tickets
+# Error Type: Environment reference errors, missing approvals, incorrect stage dependencies
+
+trigger:
+  branches:
+    include:
+      - main
+
+# Incorrect: Missing environment-specific variables
+variables:
+  buildConfig: 'Release'
+  # Missing: apiUrl, deploymentTarget variables per environment
+
+stages:
+  - stage: Build
+    displayName: 'Build Application'
+    jobs:
+      - job: BuildJob
+        displayName: 'Build and Test'
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - task: UseDotNet@2
+            displayName: 'Install .NET'
+            inputs:
+              version: '6.x'
+
+          - task: DotNetCoreCLI@2
+            displayName: 'Build Project'
+            inputs:
+              command: 'build'
+              projects: 'test-project/BuildTestApp.csproj'
+              configuration: $(buildConfig)
+
+          - task: DotNetCoreCLI@2
+            displayName: 'Publish Artifacts'
+            inputs:
+              command: 'publish'
+              projects: 'test-project/BuildTestApp.csproj'
+              arguments: '--configuration $(buildConfig) --output $(Build.ArtifactStagingDirectory)'
+              publishWebProjects: false
+
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish Build Artifacts'
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+              ArtifactName: 'drop'
+
+  # Incorrect: Missing stage dependency (Deploy_Dev should depend on Build)
+  - stage: Deploy_Dev
+    displayName: 'Deploy to Development'
+    jobs:
+      - job: DeployDevJob
+        displayName: 'Deploy to Dev Environment'
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          # Incorrect: Missing DownloadBuildArtifacts task
+          - script: |
+              echo "Deploying to Development environment"
+              echo "Configuration: $(buildConfig)"
+              # Missing: Environment-specific variables
+            displayName: 'Simulate Dev Deployment'
+
+  - stage: Deploy_Staging
+    displayName: 'Deploy to Staging'
+    # Incorrect: Wrong dependency name
+    dependsOn: Development
+    jobs:
+      # Incorrect: Missing deployment job type and environment reference
+      - job: DeployStagingJob
+        displayName: 'Deploy to Staging Environment'
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - task: DownloadBuildArtifacts@1
+            displayName: 'Download Artifacts'
+            inputs:
+              buildType: 'current'
+              downloadType: 'single'
+              artifactName: 'drop'
+              downloadPath: '$(System.ArtifactsDirectory)'
+
+          - script: |
+              echo "Deploying to Staging environment"
+              echo "Configuration: $(buildConfig)"
+            displayName: 'Simulate Staging Deployment'
+
+  - stage: Deploy_Production
+    displayName: 'Deploy to Production'
+    # Incorrect: Missing dependency on Staging
+    jobs:
+      - job: DeployProdJob
+        displayName: 'Deploy to Production Environment'
+        pool:
+          vmImage: 'ubuntu-latest'
+        # Incorrect: Missing condition to ensure previous stages succeeded
+        steps:
+          - task: DownloadBuildArtifacts@1
+            displayName: 'Download Artifacts'
+            inputs:
+              buildType: 'current'
+              downloadType: 'single'
+              artifactName: 'drop'
+              downloadPath: '$(System.ArtifactsDirectory)'
+
+          - script: |
+              echo "Deploying to Production environment"
+              echo "Configuration: $(buildConfig)"
+            displayName: 'Simulate Production Deployment'
