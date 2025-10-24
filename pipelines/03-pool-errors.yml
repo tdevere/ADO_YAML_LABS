@@ -33,7 +33,7 @@ jobs:
           command: 'build'
           projects: '$(testProjectPath)/BuildTestApp.csproj'
           arguments: '--configuration $(buildConfiguration)'
-          zipAfterPublish: false
+
 
   - job: PublishArtifact
     displayName: 'Publish Artifacts'
