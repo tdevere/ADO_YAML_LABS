@@ -1,0 +1,71 @@
+# ✅ FIXED - SCENARIO 3: VARIABLE EXPRESSION ERRORS
+# Fixes: Correct syntax for different variable types, proper scoping, valid expressions
+
+# Fixed: Standard trigger structure (no changes needed from error file)
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+
+# Fixed: Standard PR structure (no changes needed from error file)
+pr:
+  branches:
+    include:
+      - develop
+
+# Fixed: Standard pool (no changes needed from error file)
+pool:
+  name: 'Default'
+
+# Fixed: Correct variable syntax - use $[ ] for compile-time expressions (fixes mixed $() usage)
+variables:
+  buildConfig: 'Release'
+  isMaster: $[eq(variables['Build.SourceBranch'], 'refs/heads/main')]
+  testProjectPath: 'test-project'
+
+# Fixed: Proper variable scoping and expression usage (fixes wrong contexts and syntax mixing)
+jobs:
+  - job: VariableTest
+    displayName: 'Test Variable Expressions'
+    # Fixed: Job-level variables with correct syntax (fixes invalid expressions and scoping)
+    variables:
+      jobVar: 'JobLevel'
+      dependentVar: '$(buildConfig)-$(jobVar)'
+      # Fixed: Remove invalid conditional expression (fixes unrecognized 'if' function)
+      conditionalVar: 'environment-dependent'
+
+    steps:
+      # Fixed: Use $( ) for runtime expansion in scripts (fixes wrong syntax in echo commands)
+      - script: |
+          echo "Config: $(buildConfig)"
+          echo "Template Var: $(buildConfig)"
+          echo "Dependent: $(dependentVar)"
+          echo "Conditional: $(conditionalVar)"
+          echo "Directory: $(System.DefaultWorkingDirectory)"
+        displayName: 'Print Variables'
+
+      - task: DotNetCoreCLI@2
+        displayName: 'Build'
+        inputs:
+          command: 'build'
+          projects: '$(testProjectPath)/BuildTestApp.csproj'
+          arguments: '--configuration $(buildConfig)'
+
+      - task: DotNetCoreCLI@2
+        displayName: 'Run application tests'
+        inputs:
+          command: 'run'
+          projects: '$(testProjectPath)/BuildTestApp.csproj'
+
+  # Fixed: Correct condition syntax with proper variable references (fixes wrong eq() usage)
+  - job: ConditionalJob
+    condition: eq(variables['isMaster'], true)
+    steps:
+      - script: echo "This only runs on main branch"
+
+  # Fixed: Proper boolean comparison in conditions (fixes string vs boolean mismatch)
+  - job: ConditionJob
+    condition: eq(variables.isMaster, true)
+    steps:
+      - script: echo "Production deployment"

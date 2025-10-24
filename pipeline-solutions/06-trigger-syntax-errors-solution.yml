@@ -1,0 +1,36 @@
+# ✅ FIXED - SCENARIO 5A: TRIGGER SYNTAX ERRORS
+# Fixes: Proper trigger syntax, resolved schedule conflicts, valid branch patterns
+
+# Fixed: Use branches block for CI triggers (fixes simple list syntax that fails with includes/excludes)
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+
+# Fixed: PR triggers require branches block (fixes invalid list/mapping mix in error file)
+pr:
+  branches:
+    include:
+      - develop
+      - feature/*
+
+# Fixed: Remove conflicting branch filters in schedules (fixes include/exclude same branch error)
+# Uncommented and corrected: No conflicting filters; removed always: true to prevent forced runs
+schedules:
+  - cron: "0 2 * * 1-5"
+    displayName: 'Daily build'
+    branches:
+      include:
+        - main
+
+# Fixed: Standard variables (no changes needed from error file)
+variables:
+  buildConfig: 'Release'
+
+# Fixed: Simple job structure (focus on trigger fixes; no complex logic needed)
+jobs:
+  - job: Build
+    displayName: 'Simple Build'
+    steps:
+      - script: echo "Building on corrected triggers"

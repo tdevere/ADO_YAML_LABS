@@ -1,0 +1,47 @@
+# ✅ FIXED - SCENARIO 7: JOB CONDITION & DEPENDENCY ERRORS
+# Fixes: Correct condition syntax, proper dependencies, variable handling
+
+trigger:
+  branches:
+    include:
+      - main
+
+variables:
+  # Fixed: Use $[ ] for compile-time expressions (fixes invalid $( ) syntax that fails at runtime)
+  isMainBranch: $[eq(variables['Build.SourceBranch'], 'refs/heads/main')]
+  buildConfig: 'Release'
+  testProjectPath: 'test-project'
+
+jobs:
+  - job: MainBuild
+    displayName: 'Build on Main'
+    # Fixed: Boolean true (not string 'true'); and() with succeeded() (fixes invalid single condition and string comparison)
+    condition: and(succeeded(), eq(variables.isMainBranch, true))
+    steps:
+      - task: UseDotNet@2
+        displayName: 'Install .NET'
+        inputs:
+          version: '6.x'
+
+      - task: DotNetCoreCLI@2
+        displayName: 'Build'
+        inputs:
+          command: 'build'
+          projects: '$(testProjectPath)/BuildTestApp.csproj'
+
+  - job: FeatureBuild
+    displayName: 'Build on Feature Branch'
+    # Fixed: Proper variable syntax with quotes (fixes unquoted variable reference that causes parsing errors)
+    condition: ne(variables['Build.SourceBranch'], 'refs/heads/main')
+    steps:
+      - script: echo "Feature branch build"
+
+  - job: DeployMain
+    displayName: 'Deploy to Production'
+    # Fixed: Match actual job names in dependsOn (fixes non-existent job reference)
+    dependsOn:
+      - MainBuild
+    # Fixed: Correct job name in succeeded() condition (fixes reference to wrong job)
+    condition: succeeded('MainBuild')
+    steps:
+      - script: echo "Deploying to production on main branch success"

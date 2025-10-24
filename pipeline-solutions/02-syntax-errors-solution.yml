@@ -1,0 +1,67 @@
+# ✅ FIXED - SCENARIO 1: YAML SYNTAX & INDENTATION ERRORS
+# Fixes: Proper indentation, correct nesting, valid YAML structure
+
+# Fixed: Consistent indentation and proper trigger structure (fixes mixed tabs/spaces and invalid lists)
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+
+# Fixed: Correct PR trigger format (fixes broken indentation and missing branches block)
+pr:
+  branches:
+    include:
+      - develop
+
+# Fixed: Proper pool syntax (fixes invalid pool name and missing quotes)
+pool:
+  name: 'Default'
+
+# Fixed: Correct variable syntax and compile-time expressions (fixes missing quotes and $[ ] wrapper)
+variables:
+  buildConfiguration: 'Release'
+  testProjectPath: 'test-project'
+  isMain: $[eq(variables['Build.SourceBranch'], 'refs/heads/main')]
+
+# Fixed: Proper job structure and indentation (fixes nested job issues and wrong sequence alignment)
+jobs:
+  - job: Build
+    displayName: 'Build Application'
+    steps:
+      # Fixed: Correct task indentation and inputs structure (fixes broken nesting)
+      - task: UseDotNet@2
+        displayName: 'Install .NET SDK'
+        inputs:
+          version: '6.x'
+
+      - task: DotNetCoreCLI@2
+        displayName: 'Restore packages'
+        inputs:
+          command: 'restore'
+          projects: '$(testProjectPath)/*.csproj'
+
+      - task: DotNetCoreCLI@2
+        displayName: 'Build'
+        inputs:
+          command: 'build'
+          projects: '$(testProjectPath)/BuildTestApp.csproj'
+          arguments: '--configuration $(buildConfiguration)'
+
+      - task: DotNetCoreCLI@2
+        displayName: 'Run application tests'
+        inputs:
+          command: 'run'
+          projects: '$(testProjectPath)/BuildTestApp.csproj'
+
+      # Fixed: Proper multi-line script syntax (fixes invalid script block)
+      - script: |
+          echo "Build complete"
+        displayName: 'Complete'
+
+  # Fixed: Correct job dependencies and conditions (fixes missing dependsOn and wrong condition syntax)
+  - job: Publish
+    dependsOn: Build
+    condition: succeeded()
+    steps:
+      - script: echo "Publishing..."
