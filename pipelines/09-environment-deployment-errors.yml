@@ -1,16 +1,18 @@
-# ❌ BROKEN - SCENARIO 9: ENVIRONMENT DEPLOYMENT ERRORS
-# Common Issue: ~15% of pipeline support tickets
-# Error Type: Environment reference errors, missing approvals, incorrect stage dependencies
+# ✅ FIXED - SCENARIO 9: ENVIRONMENT DEPLOYMENT ERRORS
+# Fixes: Proper environment references, stage dependencies, deployment jobs, environment variables
 
 trigger:
   branches:
     include:
       - main
 
-# Incorrect: Missing environment-specific variables
+# Fixed: Environment-specific variables defined at pipeline level
 variables:
   buildConfig: 'Release'
-  # Missing: apiUrl, deploymentTarget variables per environment
+  # These would typically come from variable groups or environment variables
+  devApiUrl: 'https://api-dev.example.com'
+  stagingApiUrl: 'https://api-staging.example.com'
+  prodApiUrl: 'https://api.example.com'
 
 stages:
   - stage: Build
@@ -19,7 +21,7 @@ stages:
       - job: BuildJob
         displayName: 'Build and Test'
         pool:
-          name: 'Default'
+          vmImage: 'ubuntu-latest'
         steps:
           - task: UseDotNet@2
             displayName: 'Install .NET'
@@ -47,64 +49,99 @@ stages:
               PathtoPublish: '$(Build.ArtifactStagingDirectory)'
               ArtifactName: 'drop'
 
-  # Incorrect: Missing stage dependency (Deploy_Dev should depend on Build)
+  # Fixed: Stage dependency on Build stage
   - stage: Deploy_Dev
     displayName: 'Deploy to Development'
+    dependsOn: Build
     jobs:
-      - job: DeployDevJob
+      # Fixed: Using deployment job type with environment reference
+      - deployment: DeployDevJob
         displayName: 'Deploy to Dev Environment'
         pool:
-          name: 'Default'
-        steps:
-          # Incorrect: Missing DownloadBuildArtifacts task
-          - script: |
-              echo "Deploying to Development environment"
-              echo "Configuration: $(buildConfig)"
-              # Missing: Environment-specific variables
-            displayName: 'Simulate Dev Deployment'
+          vmImage: 'ubuntu-latest'
+        # Fixed: Reference to Development environment (enables approvals, tracking)
+        environment: 'Development'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                # Fixed: Download artifacts from Build stage
+                - task: DownloadBuildArtifacts@1
+                  displayName: 'Download Artifacts'
+                  inputs:
+                    buildType: 'current'
+                    downloadType: 'single'
+                    artifactName: 'drop'
+                    downloadPath: '$(System.ArtifactsDirectory)'
+
+                - script: |
+                    echo "Deploying to Development environment"
+                    echo "Configuration: $(buildConfig)"
+                    echo "API URL: $(devApiUrl)"
+                    echo "Artifacts downloaded to: $(System.ArtifactsDirectory)"
+                  displayName: 'Simulate Dev Deployment'
 
   - stage: Deploy_Staging
     displayName: 'Deploy to Staging'
-    # Incorrect: Missing dependency on Deploy_Dev stage
+    # Fixed: Correct dependency name matching the stage name
+    dependsOn: Deploy_Dev
     jobs:
-      # Incorrect: Missing deployment job type and environment reference
-      - job: DeployStagingJob
+      # Fixed: Using deployment job type with environment reference
+      - deployment: DeployStagingJob
         displayName: 'Deploy to Staging Environment'
         pool:
-          name: 'Default'
-        steps:
-          - task: DownloadBuildArtifacts@1
-            displayName: 'Download Artifacts'
-            inputs:
-              buildType: 'current'
-              downloadType: 'single'
-              artifactName: 'drop'
-              downloadPath: '$(System.ArtifactsDirectory)'
+          vmImage: 'ubuntu-latest'
+        # Fixed: Reference to Staging environment
+        environment: 'Staging'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: DownloadBuildArtifacts@1
+                  displayName: 'Download Artifacts'
+                  inputs:
+                    buildType: 'current'
+                    downloadType: 'single'
+                    artifactName: 'drop'
+                    downloadPath: '$(System.ArtifactsDirectory)'
 
-          - script: |
-              echo "Deploying to Staging environment"
-              echo "Configuration: $(buildConfig)"
-            displayName: 'Simulate Staging Deployment'
+                - script: |
+                    echo "Deploying to Staging environment"
+                    echo "Configuration: $(buildConfig)"
+                    echo "API URL: $(stagingApiUrl)"
+                    echo "Artifacts downloaded to: $(System.ArtifactsDirectory)"
+                  displayName: 'Simulate Staging Deployment'
 
   - stage: Deploy_Production
     displayName: 'Deploy to Production'
-    # Incorrect: Missing dependency on Deploy_Staging
+    # Fixed: Dependency on Deploy_Staging stage
+    dependsOn: Deploy_Staging
+    # Fixed: Condition to ensure staging deployment succeeded
+    condition: succeeded('Deploy_Staging')
     jobs:
-      - job: DeployProdJob
+      # Fixed: Using deployment job type with environment reference
+      - deployment: DeployProdJob
         displayName: 'Deploy to Production Environment'
         pool:
-          name: 'Default'
-        # Incorrect: Missing condition to ensure previous stages succeeded
-        steps:
-          - task: DownloadBuildArtifacts@1
-            displayName: 'Download Artifacts'
-            inputs:
-              buildType: 'current'
-              downloadType: 'single'
-              artifactName: 'drop'
-              downloadPath: '$(System.ArtifactsDirectory)'
+          vmImage: 'ubuntu-latest'
+        # Fixed: Reference to Production environment (can have manual approvals)
+        environment: 'Production'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: DownloadBuildArtifacts@1
+                  displayName: 'Download Artifacts'
+                  inputs:
+                    buildType: 'current'
+                    downloadType: 'single'
+                    artifactName: 'drop'
+                    downloadPath: '$(System.ArtifactsDirectory)'
 
-          - script: |
-              echo "Deploying to Production environment"
-              echo "Configuration: $(buildConfig)"
-            displayName: 'Simulate Production Deployment'
+                - script: |
+                    echo "Deploying to Production environment"
+                    echo "Configuration: $(buildConfig)"
+                    echo "API URL: $(prodApiUrl)"
+                    echo "Artifacts downloaded to: $(System.ArtifactsDirectory)"
+                    echo "🚀 Production deployment complete!"
+                  displayName: 'Simulate Production Deployment'
