@@ -12,6 +12,10 @@ variables:
   buildConfig: 'Release'
   testProjectPath: 'test-project'
 
+# Fixed: Use self-hosted agent pool to avoid hosted parallelism limits
+pool:
+  name: 'Default'
+
 jobs:
   - job: MainBuild
     displayName: 'Build on Main'

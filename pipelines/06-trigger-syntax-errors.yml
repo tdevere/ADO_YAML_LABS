@@ -28,6 +28,10 @@ schedules:
 variables:
   buildConfig: 'Release'
 
+# Fixed: Use self-hosted agent pool to avoid hosted parallelism limits
+pool:
+  name: 'Default'
+
 # Fixed: Simple job structure (focus on trigger fixes; no complex logic needed)
 jobs:
   - job: Build
