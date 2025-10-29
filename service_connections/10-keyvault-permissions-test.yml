@@ -1,0 +1,88 @@
+# Key Vault Permissions Test Pipeline
+# This pipeline demonstrates Azure Key Vault access using a service connection with restricted permissions
+# Expected behavior:
+#   - SET secret: SUCCESS (permission granted)
+#   - GET secret: SUCCESS (permission granted)
+#   - DELETE secret: FAILURE (permission denied - 403 Forbidden)
+
+trigger: none
+
+pool:
+  name: 'Default'
+
+variables:
+  keyVaultName: 'adotraining-kv'
+  testSecretName: 'pipeline-test-secret'
+
+jobs:
+- job: KeyVaultPermissionTest
+  displayName: 'Test Key Vault Permissions (Get/Set/Delete)'
+  steps:
+    - task: AzureCLI@2
+      displayName: '✅ SET Secret (Should Succeed)'
+      inputs:
+        azureSubscription: 'MCAPDevOpsOrg-ADO_Readiness-d2ff0b04-5013-4ac8-bb2c-9874fb77994f'
+        scriptType: 'pscore'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          Write-Host "Setting secret in Key Vault: $(keyVaultName)"
+          az keyvault secret set `
+            --vault-name $(keyVaultName) `
+            --name $(testSecretName) `
+            --value "TestValue-$(Build.BuildNumber)" `
+            --output table
+          Write-Host "✅ Secret set successfully!"
+
+    - task: AzureCLI@2
+      displayName: '✅ GET Secret (Should Succeed)'
+      inputs:
+        azureSubscription: 'MCAPDevOpsOrg-ADO_Readiness-d2ff0b04-5013-4ac8-bb2c-9874fb77994f'
+        scriptType: 'pscore'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          Write-Host "Getting secret from Key Vault: $(keyVaultName)"
+          $secret = az keyvault secret show `
+            --vault-name $(keyVaultName) `
+            --name $(testSecretName) `
+            --query value -o tsv
+          Write-Host "✅ Secret retrieved: $secret"
+
+    - task: AzureCLI@2
+      displayName: '❌ DELETE Secret (Should FAIL - Permission Denied)'
+      continueOnError: true
+      inputs:
+        azureSubscription: 'MCAPDevOpsOrg-ADO_Readiness-d2ff0b04-5013-4ac8-bb2c-9874fb77994f'
+        scriptType: 'pscore'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          Write-Host "Attempting to delete secret from Key Vault: $(keyVaultName)"
+          Write-Host "⚠️  This step should FAIL with 403 Forbidden due to restricted permissions"
+          az keyvault secret delete `
+            --vault-name $(keyVaultName) `
+            --name $(testSecretName) `
+            --output table
+          Write-Host "❌ ERROR: Delete succeeded when it should have failed!"
+          exit 1
+
+    - task: PowerShell@2
+      displayName: '📊 Test Results Summary'
+      condition: always()
+      inputs:
+        targetType: 'inline'
+        script: |
+          Write-Host ""
+          Write-Host "========================================" -ForegroundColor Cyan
+          Write-Host "  KEY VAULT PERMISSION TEST SUMMARY" -ForegroundColor Cyan
+          Write-Host "========================================" -ForegroundColor Cyan
+          Write-Host ""
+          Write-Host "Key Vault: $(keyVaultName)" -ForegroundColor Yellow
+          Write-Host "Secret Name: $(testSecretName)" -ForegroundColor Yellow
+          Write-Host ""
+          Write-Host "Expected Results:" -ForegroundColor White
+          Write-Host "  ✅ SET Secret    : SUCCESS (permissions granted)" -ForegroundColor Green
+          Write-Host "  ✅ GET Secret    : SUCCESS (permissions granted)" -ForegroundColor Green
+          Write-Host "  ❌ DELETE Secret : FAILURE (permissions denied)" -ForegroundColor Red
+          Write-Host ""
+          Write-Host "If the DELETE step succeeded, check role assignments!" -ForegroundColor Yellow
+          Write-Host "The service principal should NOT have 'delete' permission." -ForegroundColor Yellow
+          Write-Host ""
