@@ -19,7 +19,7 @@ jobs:
   displayName: 'Test Key Vault Permissions (Get/Set/Delete)'
   steps:
     - task: AzureCLI@2
-      displayName: '✅ SET Secret (Should Succeed)'
+      displayName: 'SET Secret (Should Succeed)'
       inputs:
         azureSubscription: 'KeyVaultDemo'
         scriptType: 'pscore'
@@ -31,10 +31,10 @@ jobs:
             --name $(testSecretName) `
             --value "TestValue-$(Build.BuildNumber)" `
             --output table
-          Write-Host "✅ Secret set successfully!"
+          Write-Host "Secret set successfully!"
 
     - task: AzureCLI@2
-      displayName: '✅ GET Secret (Should Succeed)'
+      displayName: 'GET Secret (Should Succeed)'
       inputs:
         azureSubscription: 'KeyVaultDemo'
         scriptType: 'pscore'
@@ -45,10 +45,10 @@ jobs:
             --vault-name $(keyVaultName) `
             --name $(testSecretName) `
             --query value -o tsv
-          Write-Host "✅ Secret retrieved: $secret"
+          Write-Host "Secret retrieved: $secret"
 
     - task: AzureCLI@2
-      displayName: '❌ DELETE Secret (Should FAIL - Permission Denied)'
+      displayName: 'DELETE Secret (Should FAIL - Permission Denied)'
       continueOnError: true
       inputs:
         azureSubscription: 'KeyVaultDemo'
@@ -56,16 +56,16 @@ jobs:
         scriptLocation: 'inlineScript'
         inlineScript: |
           Write-Host "Attempting to delete secret from Key Vault: $(keyVaultName)"
-          Write-Host "⚠️  This step should FAIL with 403 Forbidden due to restricted permissions"
+          Write-Host "This step should FAIL with 403 Forbidden due to restricted permissions"
           az keyvault secret delete `
             --vault-name $(keyVaultName) `
             --name $(testSecretName) `
             --output table
-          Write-Host "❌ ERROR: Delete succeeded when it should have failed!"
+          Write-Host "ERROR: Delete succeeded when it should have failed!"
           exit 1
 
     - task: PowerShell@2
-      displayName: '📊 Test Results Summary'
+      displayName: 'Test Results Summary'
       condition: always()
       inputs:
         targetType: 'inline'
@@ -79,9 +79,9 @@ jobs:
           Write-Host "Secret Name: $(testSecretName)" -ForegroundColor Yellow
           Write-Host ""
           Write-Host "Expected Results:" -ForegroundColor White
-          Write-Host "  ✅ SET Secret    : SUCCESS (permissions granted)" -ForegroundColor Green
-          Write-Host "  ✅ GET Secret    : SUCCESS (permissions granted)" -ForegroundColor Green
-          Write-Host "  ❌ DELETE Secret : FAILURE (permissions denied)" -ForegroundColor Red
+          Write-Host "  SET Secret    : SUCCESS (permissions granted)" -ForegroundColor Green
+          Write-Host "  GET Secret    : SUCCESS (permissions granted)" -ForegroundColor Green
+          Write-Host "  DELETE Secret : FAILURE (permissions denied)" -ForegroundColor Red
           Write-Host ""
           Write-Host "If the DELETE step succeeded, check role assignments!" -ForegroundColor Yellow
           Write-Host "The service principal should NOT have 'delete' permission." -ForegroundColor Yellow
