@@ -21,7 +21,7 @@ jobs:
     - task: AzureCLI@2
       displayName: '✅ SET Secret (Should Succeed)'
       inputs:
-        azureSubscription: 'MCAPDevOpsOrg-ADO_Readiness-d2ff0b04-5013-4ac8-bb2c-9874fb77994f'
+        azureSubscription: 'KeyVaultDemo'
         scriptType: 'pscore'
         scriptLocation: 'inlineScript'
         inlineScript: |
@@ -36,7 +36,7 @@ jobs:
     - task: AzureCLI@2
       displayName: '✅ GET Secret (Should Succeed)'
       inputs:
-        azureSubscription: 'MCAPDevOpsOrg-ADO_Readiness-d2ff0b04-5013-4ac8-bb2c-9874fb77994f'
+        azureSubscription: 'KeyVaultDemo'
         scriptType: 'pscore'
         scriptLocation: 'inlineScript'
         inlineScript: |
@@ -51,7 +51,7 @@ jobs:
       displayName: '❌ DELETE Secret (Should FAIL - Permission Denied)'
       continueOnError: true
       inputs:
-        azureSubscription: 'MCAPDevOpsOrg-ADO_Readiness-d2ff0b04-5013-4ac8-bb2c-9874fb77994f'
+        azureSubscription: 'KeyVaultDemo'
         scriptType: 'pscore'
         scriptLocation: 'inlineScript'
         inlineScript: |
